@@ -13,10 +13,12 @@ namespace pvz {
     struct gameNames {
         static constexpr
         wchar_t const * chineseName {L"植物大战僵尸中文版"};
+
+        static constexpr
+        wchar_t const * englishName {L"Plants vs. Zombies"};
     };
     
     class gameHandler {
-        std::wstring gameName;
         HWND gameWindow {};
         DWORD gamePid {};
         HANDLE gameProcess {};
@@ -152,7 +154,7 @@ namespace pvz {
         }
 
         gameHandler(gameHandler && handler__) noexcept 
-        : gameName(std::move(handler__.gameName)), gameWindow {handler__.gameWindow}, gamePid {handler__.gamePid}, gameProcess {handler__.gameProcess} {
+        : gameWindow {handler__.gameWindow}, gamePid {handler__.gamePid}, gameProcess {handler__.gameProcess} {
             handler__.gameWindow = {};
             handler__.gamePid = {};
             handler__.gameProcess = {};
@@ -160,7 +162,6 @@ namespace pvz {
 
         auto operator=(gameHandler && handler__) noexcept -> gameHandler & {
             if (this != &handler__) {
-                gameName = std::move(handler__.gameName);
                 gameWindow = handler__.gameWindow;
                 gamePid = handler__.gamePid;
                 gameProcess = handler__.gameProcess;
@@ -174,12 +175,15 @@ namespace pvz {
         }
 
         explicit
-        gameHandler(std::wstring const & gameName__ = gameNames::chineseName) 
-        : gameName(gameName__) {
-            gameWindow = ::FindWindowW(L"MainWindow", gameName.c_str());
+        gameHandler() {
+            gameWindow = ::FindWindowW(L"MainWindow", gameNames::chineseName);
 
             if (!gameWindow) {
-                return;
+                gameWindow = ::FindWindowW(L"MainWindow", gameNames::englishName);
+
+                if (!gameWindow) {
+                    return;
+                }
             }
 
             ::GetWindowThreadProcessId(gameWindow, &gamePid);
