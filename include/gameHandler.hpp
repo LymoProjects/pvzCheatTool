@@ -1,6 +1,7 @@
 #pragma once
 
 #include <co/co.h>
+#include <co/co/mutex.h>
 #include <co/time.h>
 
 #include <Windows.h>
@@ -22,6 +23,10 @@ namespace pvz {
         HWND gameWindow {};
         DWORD gamePid {};
         HANDLE gameProcess {};
+
+        bool isSunLocking {};
+        mutable
+        co::Mutex sunMut;
 
         auto available() const -> bool {
             return gameProcess != nullptr;
@@ -205,16 +210,30 @@ namespace pvz {
             });
         }
 
-        auto lockSunForALevel(DWORD number) const -> void {
+        auto lockSun(bool active, DWORD number = 0) -> void {
             if (!available()) {
                 return;
             }
 
-            go([this, number]{
-                while (writeLevelMemory(0x5560, number)) {
-                    sleep::sec(2);
-                }
-            });
+            {
+                co::MutexGuard guard(sunMut);
+
+                isSunLocking = active;
+            }
+
+            if (co::MutexGuard guard(sunMut); isSunLocking) {
+                go([this, number]{
+                    while (true) {
+                        if (co::MutexGuard guard(sunMut); isSunLocking) {
+                            writeLevelMemory(0x5560, number);
+                        } else {
+                            break;
+                        }
+
+                        co::sleep(2000);
+                    }
+                });
+            }
         }
 
         auto cheatMode(DWORD active) const -> void {
@@ -244,7 +263,7 @@ namespace pvz {
             });
         }
 
-        auto passThisLevel() const -> void {
+        auto passLevel() const -> void {
             if (!available()) {
                 return;
             }
