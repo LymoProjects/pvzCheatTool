@@ -20,7 +20,7 @@ auto main(int argc, char const ** argv) -> int {
 
             return 1;
         }
-        
+
         game.setSun(std::stoi(std::string(argv[2])));
     } else if (operation == "lockSun") {
         if (argc < 3) {
@@ -55,6 +55,8 @@ auto main(int argc, char const ** argv) -> int {
 
         return 1;
     }
+
+    sleep::ms(500);
     
     return 0;
 }
