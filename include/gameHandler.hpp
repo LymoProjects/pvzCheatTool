@@ -6,17 +6,13 @@
 #include <Windows.h>
 #include <cstddef>
 #include <handleapi.h>
+
 #include <string>
 
 namespace pvz {
-    struct commonGameNames {
+    struct gameNames {
         static constexpr
         wchar_t const * chineseName {L"植物大战僵尸中文版"};
-    };
-
-    struct gameInfos {
-        static constexpr
-        DWORD plantTotalCount {48};
     };
     
     class gameHandler {
@@ -29,66 +25,124 @@ namespace pvz {
             return gameProcess != nullptr;
         }
 
-        auto setSun__(DWORD number) const -> bool {
-            DWORD sunAddr {0x6A9EC0};
+        auto writeLevelMemory(DWORD offset, DWORD value) const -> bool {
+            DWORD baseAddr {0x6A9EC0};
 
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(sunAddr), &sunAddr, sizeof(DWORD), nullptr) == 0) {
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
                 return false;
             }
 
-            sunAddr += 0x768;
+            baseAddr += 0x768;
 
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(sunAddr), &sunAddr, sizeof(DWORD), nullptr) == 0) {
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
                 return false;
             }
 
-            sunAddr += 0x5560;
+            baseAddr += offset;
 
-            if (::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(sunAddr), &number, sizeof(DWORD), nullptr) == 0) {
+            if (::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(baseAddr), &value, sizeof(DWORD), nullptr) == 0) {
                 return false;
             }
 
             return true;
         }
 
-        auto setNoTimeCost__() const -> void {
-            DWORD plantTimeCostAddr {0x69F2C4};
-            plantTimeCostAddr -= 0x24;
+        auto readLevelMeMory(DWORD offset) const -> DWORD {
+            DWORD baseAddr {0x6A9EC0};
 
-            DWORD timeCost {};
-
-            for (DWORD i {}; i != gameInfos::plantTotalCount; ++i) {
-                plantTimeCostAddr += 0x24;
-
-                ::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(plantTimeCostAddr), &timeCost, sizeof(DWORD), nullptr);
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return 0;
             }
+
+            baseAddr += 0x768;
+
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return 0;
+            }
+
+            baseAddr += offset;
+
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return 0;
+            }
+
+            return baseAddr;
         }
 
-        auto setNoSunCost__() const -> void {
-            DWORD plantSunCostAddr {0x69F2C0};
-            plantSunCostAddr -= 0x24;
+        auto writeArchiveMemory(DWORD offset, DWORD value) const -> bool {
+            DWORD baseAddr {0x6A9EC0};
 
-            DWORD sunCost {};
-
-            for (DWORD i {}; i != gameInfos::plantTotalCount; ++i) {
-                plantSunCostAddr += 0x24;
-
-                ::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(plantSunCostAddr), &sunCost, sizeof(DWORD), nullptr);
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return false;
             }
+
+            baseAddr += 0x82C;
+
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return false;
+            }
+
+            baseAddr += offset;
+
+            if (::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(baseAddr), &value, sizeof(DWORD), nullptr) == 0) {
+                return false;
+            }
+
+            return true;
         }
 
-        auto cheatMode__(bool cheat) const -> void {
-            DWORD cheatModeAddr {0x6A9EC0};
+        auto readArchiveMemory(DWORD offset, DWORD value) const -> DWORD {
+            DWORD baseAddr {0x6A9EC0};
 
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(cheatModeAddr), &cheatModeAddr, sizeof(DWORD), nullptr) == 0) {
-                return;
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return 0;
             }
 
-            cheatModeAddr += 0x814;
+            baseAddr += 0x82C;
 
-            DWORD available__ = static_cast<DWORD>(cheat);
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return 0;
+            }
 
-            ::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(cheatModeAddr), &available__, sizeof(DWORD), nullptr);
+            baseAddr += offset;
+
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return 0;
+            }
+
+            return baseAddr;
+        }
+
+        auto writeGlobalMemory(DWORD offset, DWORD value) const -> bool {
+            DWORD baseAddr {0x6A9EC0};
+
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return false;
+            }
+
+            baseAddr += offset;
+
+            if (::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(baseAddr), &value, sizeof(DWORD), nullptr) == 0) {
+                return false;
+            }
+
+            return true;
+        }
+
+        auto readGlobalMemory(DWORD offset) const -> DWORD {
+            DWORD baseAddr {0x6A9EC0};
+
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return 0;
+            }
+
+            baseAddr += offset;
+
+            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
+                return 0;
+            }
+
+            return baseAddr;
         }
     public:
         ~gameHandler() {
@@ -98,7 +152,8 @@ namespace pvz {
         }
 
         gameHandler(gameHandler && handler__) noexcept 
-        : gameName(std::move(handler__.gameName)), gamePid {handler__.gamePid}, gameProcess {handler__.gameProcess} {
+        : gameName(std::move(handler__.gameName)), gameWindow {handler__.gameWindow}, gamePid {handler__.gamePid}, gameProcess {handler__.gameProcess} {
+            handler__.gameWindow = {};
             handler__.gamePid = {};
             handler__.gameProcess = {};
         }
@@ -106,9 +161,11 @@ namespace pvz {
         auto operator=(gameHandler && handler__) noexcept -> gameHandler & {
             if (this != &handler__) {
                 gameName = std::move(handler__.gameName);
+                gameWindow = handler__.gameWindow;
                 gamePid = handler__.gamePid;
                 gameProcess = handler__.gameProcess;
 
+                handler__.gameWindow = {};
                 handler__.gamePid = {};
                 handler__.gameProcess = {};
             }
@@ -117,7 +174,7 @@ namespace pvz {
         }
 
         explicit
-        gameHandler(std::wstring const & gameName__ = commonGameNames::chineseName) 
+        gameHandler(std::wstring const & gameName__ = gameNames::chineseName) 
         : gameName(gameName__) {
             gameWindow = ::FindWindowW(L"MainWindow", gameName.c_str());
 
@@ -140,7 +197,7 @@ namespace pvz {
             }
 
             go([this, number]{
-                setSun__(number);
+                writeLevelMemory(0x5560, number);
             });
         }
 
@@ -150,39 +207,56 @@ namespace pvz {
             }
 
             go([this, number]{
-                while (setSun__(number)) {
-                    sleep::sec(3);
+                while (writeLevelMemory(0x5560, number)) {
+                    sleep::sec(2);
                 }
             });
         }
 
-        auto setNoTimeCost() const -> void {
+        auto cheatMode(DWORD active) const -> void {
+            if (!available()) {
+                return;
+            }
+
+            go([this, active]{
+                writeGlobalMemory(0x814, active);
+            });
+        }
+
+        auto toLastAttack() const -> void {
+            if (!available()) {
+                return;
+            }
+
+            DWORD totalAttacks {readLevelMeMory(0x5564)};
+
+            if (totalAttacks == 0) {
+                return;
+            }
+
+            go([totalAttacks, this]{
+                writeLevelMemory(0x557C, totalAttacks - 1);
+                writeLevelMemory(0x559C,1);
+            });
+        }
+
+        auto passThisLevel() const -> void {
             if (!available()) {
                 return;
             }
 
             go([this]{
-                setNoTimeCost__();
+                writeLevelMemory(0x5600, 1);
             });
         }
 
-        auto setNoSunCost() const -> void {
+        auto setMoney(DWORD money) const -> void {
             if (!available()) {
                 return;
             }
 
-            go([this]{
-                setNoSunCost__();
-            });
-        }
-
-        auto cheatMode(bool cheat) const -> void {
-            if (!available()) {
-                return;
-            }
-
-            go([this, cheat]{
-                cheatMode__(cheat);
+            go([money {money / 10}, this]{
+                writeArchiveMemory(0x28, money);
             });
         }
     };

@@ -1,11 +1,9 @@
-#include <iostream>
-
 #include "gameHandler.hpp"
 
 auto main() -> int {
     pvz::gameHandler game;
 
-    game.cheatMode(true);
+    game.setMoney(20000);
 
     sleep::sec(1);
     
