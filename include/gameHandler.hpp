@@ -1,28 +1,73 @@
 #pragma once
 
 #include <co/co.h>
+#include <co/co/mutex.h>
 #include <co/time.h>
+#include <co/tasked.h>
 
 #include <Windows.h>
 #include <cstddef>
 #include <handleapi.h>
 
 #include <string>
+#include <unordered_set>
 
 namespace pvz {
-    struct gameNames {
-        static constexpr
-        wchar_t const * chineseName {L"植物大战僵尸中文版"};
-
-        static constexpr
-        wchar_t const * englishName {L"Plants vs. Zombies"};
-    };
-    
     class gameHandler {
-        std::wstring gameName {gameNames::chineseName};
-        HWND gameWindow {};
-        DWORD gamePid {};
+        static inline
+        std::unordered_set<std::wstring> const gameNames {
+            L"植物大战僵尸中文版",
+            L"Plants vs. Zombies"
+        };
+
         HANDLE gameProcess {};
+
+        mutable
+        co::Mutex gameMut;
+
+        Tasked tsk;
+
+        auto loadGame() -> bool {
+            HWND gameWindow {};
+            
+            for (auto const & pvzName : gameNames) {
+                gameWindow = ::FindWindowW(L"MainWindow", pvzName.c_str());
+
+                if (gameWindow) {
+                    break;
+                }
+            }
+
+            if (!gameWindow) {
+                co::MutexGuard guard(gameMut);
+
+                gameProcess = {};
+
+                return false;
+            }
+
+            DWORD gamePid {};
+
+            ::GetWindowThreadProcessId(gameWindow, &gamePid);
+
+            if (gamePid == 0) {
+                co::MutexGuard guard(gameMut);
+
+                gameProcess = {};
+
+                return false;
+            }
+
+            auto gameProcess__ {::OpenProcess(PROCESS_ALL_ACCESS, false, gamePid)};
+
+            co::MutexGuard guard(gameMut);
+
+            if (gameProcess__ != gameProcess) {
+                gameProcess = gameProcess__;
+            }
+
+            return gameProcess;
+        }
 
         auto writeLevelMemory(DWORD offset, DWORD value) const -> bool {
             DWORD baseAddr {0x6A9EC0};
@@ -145,107 +190,76 @@ namespace pvz {
         }
     public:
         ~gameHandler() {
-            if (gameProcess) {
+            tsk.stop();
+
+            if (co::MutexGuard guard(gameMut); gameProcess) {
                 ::CloseHandle(gameProcess);
             }    
         }
 
-        gameHandler(gameHandler && handler__) noexcept 
-        : gameName(std::move(handler__.gameName)), gameWindow {handler__.gameWindow}, gamePid {handler__.gamePid}, gameProcess {handler__.gameProcess} {
-            handler__.gameWindow = {};
-            handler__.gamePid = {};
-            handler__.gameProcess = {};
-        }
-
-        auto operator=(gameHandler && handler__) noexcept -> gameHandler & {
-            if (this != &handler__) {
-                gameName = std::move(handler__.gameName);
-                gameWindow = handler__.gameWindow;
-                gamePid = handler__.gamePid;
-                gameProcess = handler__.gameProcess;
-
-                handler__.gameWindow = {};
-                handler__.gamePid = {};
-                handler__.gameProcess = {};
-            }
-
-            return *this;
-        }
+        gameHandler(gameHandler const &) = delete;
+        auto operator=(gameHandler const &) -> gameHandler & = delete;
 
         explicit
         gameHandler() {
-            gameWindow = ::FindWindowW(L"MainWindow", gameName.c_str());
+            loadGame();
 
-            if (!gameWindow) {
-                gameName = gameNames::englishName;
-
-                gameWindow = ::FindWindowW(L"MainWindow", gameName.c_str());
-
-                if (!gameWindow) {
-                    return;
-                }
-            }
-
-            ::GetWindowThreadProcessId(gameWindow, &gamePid);
-
-            if (gamePid == 0) {
-                return;
-            }
-
-            gameProcess = ::OpenProcess(PROCESS_ALL_ACCESS, false, gamePid);
+            tsk.run_every([this]{
+                go([this]{
+                    loadGame();
+                });
+            }, 2);
         }
 
         auto available() const -> bool {
-            return gameProcess != nullptr;
-        }
+            co::MutexGuard guard(gameMut);
 
-        auto getGameName() const -> std::wstring const & {
-            return gameName;
+            return gameProcess;
         }
 
         auto setSun(DWORD number) const -> void {
-            if (!available()) {
-                return;
-            }
-
             go([this, number]{
+                if (!available()) {
+                    return;
+                }
+
                 writeLevelMemory(0x5560, number);
             });
         }
 
         auto cheatMode(DWORD active) const -> void {
-            if (!available()) {
-                return;
-            }
-
             go([this, active]{
+                if (!available()) {
+                    return;
+                }
+
                 writeGlobalMemory(0x814, active);
             });
         }
 
         auto toLastAttack() const -> void {
-            if (!available()) {
-                return;
-            }
+            go([this]{
+                if (!available()) {
+                    return;
+                }
 
-            DWORD totalAttacks {readLevelMeMory(0x5564)};
+                DWORD totalAttacks {readLevelMeMory(0x5564)};
 
-            if (totalAttacks == 0) {
-                return;
-            }
+                if (totalAttacks == 0) {
+                    return;
+                }
 
-            go([totalAttacks, this]{
                 writeLevelMemory(0x557C, totalAttacks - 1);
                 writeLevelMemory(0x559C,1);
             });
         }
 
         auto setMoney(DWORD money) const -> void {
-            if (!available()) {
-                return;
-            }
-
             go([money {money / 10}, this]{
+                if (!available()) {
+                    return;
+                }
+
                 writeArchiveMemory(0x28, money);
             });
         }

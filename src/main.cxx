@@ -10,9 +10,10 @@
 
 #include "ftxui/dom/node.hpp"
 #include "ftxui/screen/color.hpp"
+
 #include "gameHandler.hpp"
 
-auto main() -> int {
+DEF_main(argc, argv) {
     pvz::gameHandler game;
 
     std::string moneyInputValue;
@@ -60,19 +61,14 @@ auto main() -> int {
         toLastAttackButton
     })};
 
-    std::wstring windowTitleString(
-        game.available() ?
-        L"游戏已启动(" + game.getGameName() + L")" : L"请启动游戏后再打开修改器"
-    );
-
-    auto windowTitle {ftxui::text(windowTitleString)};
-
-    windowTitle |= ftxui::color(
-        game.available() ?
-        ftxui::Color::Green : ftxui::Color::Red
-    );
-
     auto mainWindow {ftxui::Renderer(comps, [&]{
+        auto windowTitle {
+            ftxui::text(game.available() ?
+            L"游戏已启动" : L"游戏未启动") | ftxui::color(
+            game.available() ?
+            ftxui::Color::Green : ftxui::Color::Red
+        )};
+
         return ftxui::window(windowTitle, ftxui::vbox({
             ftxui::hbox({
                 ftxui::filler(),
