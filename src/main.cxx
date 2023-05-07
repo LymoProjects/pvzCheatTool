@@ -40,29 +40,14 @@ auto main() -> int {
     std::vector<std::string> cheatModeOptions {"开", "关"};
     int cheatModeSelected {1};
 
-    auto cheatModeTogglePart__ {ftxui::Toggle(&cheatModeOptions, &cheatModeSelected)};
-
-    auto cheatModeTogglePart {ftxui::Renderer(cheatModeTogglePart__, [&]{
-        return ftxui::hbox({
-            ftxui::text("无消耗无冷却种植 : "),
-            cheatModeTogglePart__->Render(),
-        });
-    })};
+    auto cheatModeTogglePart {ftxui::Toggle(&cheatModeOptions, &cheatModeSelected)};
 
     auto cheatModeButton {ftxui::Button("应用", [&]{
         game.cheatMode(std::abs(1 - cheatModeSelected));
     })};
 
-    auto toLastAttackButton {ftxui::Button("直接到达最后一波", [&]{
+    auto toLastAttackButton {ftxui::Button("直接迎来最后一波", [&]{
         game.toLastAttack();
-    })};
-    auto passLevelButton {ftxui::Button("直接通过本关", [&]{
-        game.passLevel();
-    })};
-
-    auto levelButtons {ftxui::Container::Horizontal({
-        toLastAttackButton,
-        passLevelButton
     })};
 
     auto comps {ftxui::Container::Vertical({
@@ -72,7 +57,7 @@ auto main() -> int {
         sunButtonPart,
         cheatModeTogglePart,
         cheatModeButton,
-        levelButtons
+        toLastAttackButton
     })};
 
     std::wstring windowTitleString(
@@ -90,9 +75,8 @@ auto main() -> int {
     auto mainWindow {ftxui::Renderer(comps, [&]{
         return ftxui::window(windowTitle, ftxui::vbox({
             ftxui::hbox({
-                ftxui::text("请输入金钱数 : "),
                 ftxui::filler(),
-                moneyInputPart->Render(),
+                ftxui::window(ftxui::text("请输入金钱数"), moneyInputPart->Render()),
                 ftxui::filler()
             }),
             ftxui::hbox({
@@ -102,9 +86,8 @@ auto main() -> int {
             }),
             ftxui::separatorEmpty(),
             ftxui::hbox({
-                ftxui::text("请输入阳光数 : "),
                 ftxui::filler(),
-                sunInputPart->Render(),
+                ftxui::window(ftxui::text("请输入阳光数"), sunInputPart->Render()),
                 ftxui::filler()
             }),
             ftxui::hbox({
@@ -115,7 +98,7 @@ auto main() -> int {
             ftxui::separatorEmpty(),
             ftxui::hbox({
                 ftxui::filler(),
-                cheatModeTogglePart->Render(),
+                ftxui::window(ftxui::text("无消耗无冷却种植"), cheatModeTogglePart->Render()),
                 ftxui::filler()
             }),
             ftxui::hbox({
@@ -126,7 +109,7 @@ auto main() -> int {
             ftxui::separatorEmpty(),
             ftxui::hbox({
                 ftxui::filler(),
-                levelButtons->Render(),
+                toLastAttackButton->Render(),
                 ftxui::filler()
             })
         }));

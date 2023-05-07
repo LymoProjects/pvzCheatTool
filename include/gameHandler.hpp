@@ -240,16 +240,6 @@ namespace pvz {
             });
         }
 
-        auto passLevel() const -> void {
-            if (!available()) {
-                return;
-            }
-
-            go([this]{
-                writeLevelMemory(0x5600, 1);
-            });
-        }
-
         auto setMoney(DWORD money) const -> void {
             if (!available()) {
                 return;
