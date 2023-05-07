@@ -3,6 +3,7 @@ add_rules("mode.debug", "mode.release")
 set_languages("c++20")
 
 add_requires("coost", {configs = {libcurl = true, openssl = true}})
+add_requires("vcpkg::ftxui")
 
 target("pvzCheatTool")
     set_kind("binary")
@@ -18,7 +19,8 @@ target("pvzCheatTool")
     add_files("src/*.cxx")
 
     add_packages(
-        "coost"
+        "coost",
+        "vcpkg::ftxui"
     )
 target_end()
 --

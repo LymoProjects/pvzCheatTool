@@ -18,6 +18,7 @@ target_include_directories(pvzCheatTool PRIVATE
     C:/Users/liu01/AppData/Local/.xmake/packages/c/coost/v3.0.0/8740acc100024f88bd62575f6add4dcd/include
     C:/Users/liu01/AppData/Local/.xmake/packages/l/libcurl/7.87.0/a2ac3a70b1e948b1843919b4cbb41b7f/include
     C:/Users/liu01/AppData/Local/.xmake/packages/o/openssl/1.1.1-t/9458079689e342b58f2f2e8d4b2fb860/include
+    D:/Aps/vcpkg/installed/x64-windows-static/include
 )
 target_compile_definitions(pvzCheatTool PRIVATE
     CURL_STATICLIB
@@ -53,6 +54,9 @@ target_link_libraries(pvzCheatTool PRIVATE
     libcurl
     libssl
     libcrypto
+    ftxui-component
+    ftxui-dom
+    ftxui-screen
     advapi32
     crypt32
     wldap32
@@ -64,6 +68,7 @@ target_link_directories(pvzCheatTool PRIVATE
     C:/Users/liu01/AppData/Local/.xmake/packages/c/coost/v3.0.0/8740acc100024f88bd62575f6add4dcd/lib
     C:/Users/liu01/AppData/Local/.xmake/packages/l/libcurl/7.87.0/a2ac3a70b1e948b1843919b4cbb41b7f/lib
     C:/Users/liu01/AppData/Local/.xmake/packages/o/openssl/1.1.1-t/9458079689e342b58f2f2e8d4b2fb860/lib
+    D:/Aps/vcpkg/installed/x64-windows-static/lib
 )
 target_sources(pvzCheatTool PRIVATE
     src/main.cxx

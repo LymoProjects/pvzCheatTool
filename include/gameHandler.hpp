@@ -1,7 +1,6 @@
 #pragma once
 
 #include <co/co.h>
-#include <co/co/mutex.h>
 #include <co/time.h>
 
 #include <Windows.h>
@@ -20,17 +19,10 @@ namespace pvz {
     };
     
     class gameHandler {
+        std::wstring gameName {gameNames::chineseName};
         HWND gameWindow {};
         DWORD gamePid {};
         HANDLE gameProcess {};
-
-        bool isSunLocking {};
-        mutable
-        co::Mutex sunMut;
-
-        auto available() const -> bool {
-            return gameProcess != nullptr;
-        }
 
         auto writeLevelMemory(DWORD offset, DWORD value) const -> bool {
             DWORD baseAddr {0x6A9EC0};
@@ -159,7 +151,7 @@ namespace pvz {
         }
 
         gameHandler(gameHandler && handler__) noexcept 
-        : gameWindow {handler__.gameWindow}, gamePid {handler__.gamePid}, gameProcess {handler__.gameProcess} {
+        : gameName(std::move(handler__.gameName)), gameWindow {handler__.gameWindow}, gamePid {handler__.gamePid}, gameProcess {handler__.gameProcess} {
             handler__.gameWindow = {};
             handler__.gamePid = {};
             handler__.gameProcess = {};
@@ -167,6 +159,7 @@ namespace pvz {
 
         auto operator=(gameHandler && handler__) noexcept -> gameHandler & {
             if (this != &handler__) {
+                gameName = std::move(handler__.gameName);
                 gameWindow = handler__.gameWindow;
                 gamePid = handler__.gamePid;
                 gameProcess = handler__.gameProcess;
@@ -181,10 +174,12 @@ namespace pvz {
 
         explicit
         gameHandler() {
-            gameWindow = ::FindWindowW(L"MainWindow", gameNames::chineseName);
+            gameWindow = ::FindWindowW(L"MainWindow", gameName.c_str());
 
             if (!gameWindow) {
-                gameWindow = ::FindWindowW(L"MainWindow", gameNames::englishName);
+                gameName = gameNames::englishName;
+
+                gameWindow = ::FindWindowW(L"MainWindow", gameName.c_str());
 
                 if (!gameWindow) {
                     return;
@@ -200,6 +195,14 @@ namespace pvz {
             gameProcess = ::OpenProcess(PROCESS_ALL_ACCESS, false, gamePid);
         }
 
+        auto available() const -> bool {
+            return gameProcess != nullptr;
+        }
+
+        auto getGameName() const -> std::wstring const & {
+            return gameName;
+        }
+
         auto setSun(DWORD number) const -> void {
             if (!available()) {
                 return;
@@ -208,32 +211,6 @@ namespace pvz {
             go([this, number]{
                 writeLevelMemory(0x5560, number);
             });
-        }
-
-        auto lockSun(bool active, DWORD number = 0) -> void {
-            if (!available()) {
-                return;
-            }
-
-            {
-                co::MutexGuard guard(sunMut);
-
-                isSunLocking = active;
-            }
-
-            if (co::MutexGuard guard(sunMut); isSunLocking) {
-                go([this, number]{
-                    while (true) {
-                        if (co::MutexGuard guard(sunMut); isSunLocking) {
-                            writeLevelMemory(0x5560, number);
-                        } else {
-                            break;
-                        }
-
-                        co::sleep(2000);
-                    }
-                });
-            }
         }
 
         auto cheatMode(DWORD active) const -> void {
