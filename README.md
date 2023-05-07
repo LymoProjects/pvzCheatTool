@@ -4,4 +4,9 @@
 
 仅支持一代中/英文版.
 
-![image](https://github.com/LymoProjects/pvzCheatTool/blob/master/assets/gameOn.png)
+汉化版
+![汉化版](https://github.com/LymoProjects/pvzCheatTool/blob/master/assets/zhcn.png)
+
+英文原版
+![英文原版](https://github.com/LymoProjects/pvzCheatTool/blob/master/assets/en.png)
+
