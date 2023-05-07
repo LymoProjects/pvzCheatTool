@@ -6,11 +6,11 @@
 #include <co/tasked.h>
 
 #include <Windows.h>
-#include <cstddef>
-#include <handleapi.h>
 
 #include <string>
 #include <unordered_set>
+
+#include "memoryOperation.hpp"
 
 namespace pvz {
     class gameHandler {
@@ -69,124 +69,10 @@ namespace pvz {
             return gameProcess;
         }
 
-        auto writeLevelMemory(DWORD offset, DWORD value) const -> bool {
-            DWORD baseAddr {0x6A9EC0};
+        auto getGameProcess() const -> HANDLE {
+            co::MutexGuard guard(gameMut);
 
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return false;
-            }
-
-            baseAddr += 0x768;
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return false;
-            }
-
-            baseAddr += offset;
-
-            if (::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(baseAddr), &value, sizeof(DWORD), nullptr) == 0) {
-                return false;
-            }
-
-            return true;
-        }
-
-        auto readLevelMeMory(DWORD offset) const -> DWORD {
-            DWORD baseAddr {0x6A9EC0};
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return 0;
-            }
-
-            baseAddr += 0x768;
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return 0;
-            }
-
-            baseAddr += offset;
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return 0;
-            }
-
-            return baseAddr;
-        }
-
-        auto writeArchiveMemory(DWORD offset, DWORD value) const -> bool {
-            DWORD baseAddr {0x6A9EC0};
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return false;
-            }
-
-            baseAddr += 0x82C;
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return false;
-            }
-
-            baseAddr += offset;
-
-            if (::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(baseAddr), &value, sizeof(DWORD), nullptr) == 0) {
-                return false;
-            }
-
-            return true;
-        }
-
-        auto readArchiveMemory(DWORD offset, DWORD value) const -> DWORD {
-            DWORD baseAddr {0x6A9EC0};
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return 0;
-            }
-
-            baseAddr += 0x82C;
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return 0;
-            }
-
-            baseAddr += offset;
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return 0;
-            }
-
-            return baseAddr;
-        }
-
-        auto writeGlobalMemory(DWORD offset, DWORD value) const -> bool {
-            DWORD baseAddr {0x6A9EC0};
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return false;
-            }
-
-            baseAddr += offset;
-
-            if (::WriteProcessMemory(gameProcess, reinterpret_cast<LPVOID>(baseAddr), &value, sizeof(DWORD), nullptr) == 0) {
-                return false;
-            }
-
-            return true;
-        }
-
-        auto readGlobalMemory(DWORD offset) const -> DWORD {
-            DWORD baseAddr {0x6A9EC0};
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return 0;
-            }
-
-            baseAddr += offset;
-
-            if (::ReadProcessMemory(gameProcess, reinterpret_cast<LPCVOID>(baseAddr), &baseAddr, sizeof(DWORD), nullptr) == 0) {
-                return 0;
-            }
-
-            return baseAddr;
+            return gameProcess;
         }
     public:
         ~gameHandler() {
@@ -223,7 +109,7 @@ namespace pvz {
                     return;
                 }
 
-                writeLevelMemory(0x5560, number);
+                writeLevelMemory(getGameProcess(), 0x5560, number);
             });
         }
 
@@ -233,7 +119,7 @@ namespace pvz {
                     return;
                 }
 
-                writeGlobalMemory(0x814, active);
+                writeGlobalMemory(getGameProcess(), 0x814, active);
             });
         }
 
@@ -243,14 +129,14 @@ namespace pvz {
                     return;
                 }
 
-                DWORD totalAttacks {readLevelMeMory(0x5564)};
+                DWORD totalAttacks {readLevelMeMory(getGameProcess(), 0x5564)};
 
                 if (totalAttacks == 0) {
                     return;
                 }
 
-                writeLevelMemory(0x557C, totalAttacks - 1);
-                writeLevelMemory(0x559C,1);
+                writeLevelMemory(getGameProcess(), 0x557C, totalAttacks - 1);
+                writeLevelMemory(getGameProcess(), 0x559C,1);
             });
         }
 
@@ -260,7 +146,7 @@ namespace pvz {
                     return;
                 }
 
-                writeArchiveMemory(0x28, money);
+                writeArchiveMemory(getGameProcess(), 0x28, money);
             });
         }
     };
