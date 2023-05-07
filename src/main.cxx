@@ -98,7 +98,11 @@ auto main() -> int {
             ftxui::separatorEmpty(),
             ftxui::hbox({
                 ftxui::filler(),
-                ftxui::window(ftxui::text("无消耗无冷却种植"), cheatModeTogglePart->Render()),
+                ftxui::window(ftxui::text("无消耗无冷却种植"), ftxui::hbox({
+                    ftxui::filler(),
+                    cheatModeTogglePart->Render(),
+                    ftxui::filler()
+                })),
                 ftxui::filler()
             }),
             ftxui::hbox({
